@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tadium AI Agent</title>
+    <style>
+        @font-face {
+            font-family: 'Montserrat';
+            src: url('Montserrat-Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Montserrat';
+            src: url('Montserrat-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --bg-primary: #09090b;
+            --bg-secondary: #0c0c0e;
+            --bg-tertiary: #111114;
+            --bg-elevated: #16161a;
+            --bg-hover: #1c1c21;
+            --border-primary: #1e1e23;
+            --border-secondary: #2a2a32;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #52525b;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --warning: #eab308;
+            --error: #ef4444;
+            --gradient-1: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-primary);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 16px;
+            gap: 24px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 8px;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: white;
+        }
+
+        .brand-text {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-badge {
+            margin-left: auto;
+            background: var(--bg-elevated);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--text-muted);
+            border: 1px solid var(--border-primary);
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            padding: 0 8px;
+        }
+
+        .model-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .model-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+
+        .model-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .model-item.selected {
+            background: var(--bg-elevated);
+            border-color: var(--border-secondary);
+        }
+
+        .model-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border: 1px solid var(--border-primary);
+        }
+
+        .model-item.selected .model-icon {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .model-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .model-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .model-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .model-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .model-status.installed {
+            background: var(--success);
+        }
+
+        .model-status.cloud {
+            background: var(--accent);
+        }
+
+        .status-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .status-dot.active {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-dot.error {
+            background: var(--error);
+        }
+
+        .status-dot.warning {
+            background: var(--warning);
+        }
+
+        .status-text {
+            color: var(--text-secondary);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-elevated);
+            border-radius: 2px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar.visible {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-1);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .progress-text.visible {
+            display: block;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .shortcut {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .kbd {
+            background: var(--bg-elevated);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            border: 1px solid var(--border-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border-primary);
+            gap: 12px;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .toolbar-right {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-primary);
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .output-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-area::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .output-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .output-area::-webkit-scrollbar-thumb {
+            background: var(--border-secondary);
+            border-radius: 3px;
+        }
+
+        .output-area::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .empty-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            max-width: 380px;
+            line-height: 1.6;
+        }
+
+        .empty-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 24px;
+            justify-content: center;
+        }
+
+        .suggestion {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .suggestion:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-secondary);
+            color: var(--text-primary);
+        }
+
+        .log-container {
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .log-entry.status {
+            border-left: 3px solid var(--warning);
+        }
+
+        .log-entry.action {
+            border-left: 3px solid var(--success);
+        }
+
+        .log-entry.error {
+            border-left: 3px solid var(--error);
+        }
+
+        .log-entry.thought {
+            border-left: 3px solid var(--accent);
+        }
+
+        .log-entry.done {
+            border-left: 3px solid var(--success);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .log-time {
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            min-width: 60px;
+            padding-top: 2px;
+        }
+
+        .log-content {
+            flex: 1;
+        }
+
+        .log-content .label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .log-content .message {
+            color: var(--text-primary);
+        }
+
+        .input-area {
+            padding: 16px 24px 24px;
+            border-top: 1px solid var(--border-primary);
+            background: var(--bg-secondary);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 4px;
+            transition: border-color 0.15s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--border-secondary);
+        }
+
+        .text-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 12px 14px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            min-height: 44px;
+            max-height: 140px;
+            line-height: 1.5;
+        }
+
+        .text-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .run-btn {
+            height: 44px;
+            padding: 0 18px;
+            border-radius: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">T</div>
+            <span class="brand-text">Tadium</span>
+            <span class="brand-badge">v1.0</span>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Models</div>
+            <div class="model-list" id="modelList"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Status</div>
+            <div class="status-box">
+                <div class="status-header">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span class="status-text" id="statusText">Idle</span>
+                </div>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-label">Max Steps</div>
+            <div class="model-list">
+                <div class="model-item" data-steps="10" onclick="setMaxSteps(10, this)">
+                    <div class="model-info">
+                        <div class="model-name">10 steps</div>
+                    </div>
+                </div>
+                <div class="model-item selected" data-steps="20" onclick="setMaxSteps(20, this)">
+                    <div class="model-info">
+                        <div class="model-name">20 steps</div>
+                    </div>
+                </div>
+                <div class="model-item" data-steps="50" onclick="setMaxSteps(50, this)">
+                    <div class="model-info">
+                        <div class="model-name">50 steps</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="shortcut">
+                <span>Emergency stop</span>
+                <span class="kbd">ESC 2x</span>
+            </div>
+            <div class="shortcut">
+                <span>Run agent</span>
+                <span class="kbd">Enter</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <span class="toolbar-title">Agent Console</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn btn-ghost" onclick="clearLog()">Clear</button>
+                <button class="btn btn-ghost" onclick="refreshModels()">Refresh Models</button>
+            </div>
+        </div>
+
+        <div class="output-area" id="outputArea">
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">⌘</div>
+                <div class="empty-title">Ready to start</div>
+                <div class="empty-desc">Enter an instruction below and the AI agent will observe your screen and take actions to complete the task.</div>
+                <div class="empty-suggestions">
+                    <div class="suggestion" onclick="useSuggestion('Open Chrome and search for Python tutorials')">Open Chrome and search Python</div>
+                    <div class="suggestion" onclick="useSuggestion('Open Notepad and type Hello World')">Type Hello World in Notepad</div>
+                    <div class="suggestion" onclick="useSuggestion('Open Settings and check Windows version')">Check Windows version</div>
+                </div>
+            </div>
+            <div class="log-container hidden" id="logContainer"></div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea
+                    class="text-input"
+                    id="instructionInput"
+                    placeholder="Tell the AI what to do..."
+                    rows="1"
+                ></textarea>
+                <button class="btn btn-primary run-btn" id="runBtn" onclick="runAgent()">
+                    Run
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let selectedModel = null;
+        let maxSteps = 20;
+        let modelDownloadState = {};
+
+        const modelList = document.getElementById('modelList');
+        const logContainer = document.getElementById('logContainer');
+        const emptyState = document.getElementById('emptyState');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const runBtn = document.getElementById('runBtn');
+        const instructionInput = document.getElementById('instructionInput');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const progressTextEl = document.getElementById('progressText');
+
+        async function init() {
+            await loadModels();
+        }
+
+        async function loadModels() {
+            try {
+                const models = await window.pywebview.api.get_models();
+                renderModels(models);
+            } catch (e) {
+                console.error('Failed to load models:', e);
+            }
+        }
+
+        function renderModels(models) {
+            modelList.innerHTML = '';
+            if (!selectedModel) selectedModel = models[0]?.key;
+
+            models.forEach(model => {
+                const el = document.createElement('div');
+                el.className = `model-item ${model.key === selectedModel ? 'selected' : ''}`;
+                el.onclick = () => selectModel(model.key, model);
+
+                const statusClass = model.type === 'cloud' ? 'cloud' : (model.installed ? 'installed' : '');
+                const isDownloading = modelDownloadState[model.key]?.downloading;
+                const icon = model.type === 'cloud' ? '☁' : (model.light ? '⚡' : '🧠');
+                const meta = model.type === 'cloud' ? model.size : (model.installed ? `${model.size} installed` : `${model.size} - needs download`);
+
+                el.innerHTML = `
+                    <div class="model-icon">${icon}</div>
+                    <div class="model-info">
+                        <div class="model-name">${model.name}</div>
+                        <div class="model-meta">${meta}</div>
+                    </div>
+                    <div class="model-status ${statusClass}"></div>
+                `;
+
+                if (!model.installed && model.type === 'local') {
+                    const installBtn = document.createElement('button');
+                    installBtn.className = 'btn btn-ghost';
+                    installBtn.style.cssText = 'padding: 4px 10px; font-size: 10px; margin-left: 4px;';
+                    installBtn.textContent = isDownloading ? '...' : 'Install';
+                    installBtn.disabled = isDownloading;
+                    installBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        downloadModel(model);
+                    };
+                    el.appendChild(installBtn);
+                }
+
+                modelList.appendChild(el);
+            });
+        }
+
+        function selectModel(key, model) {
+            selectedModel = key;
+            document.querySelectorAll('.model-item').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        async function downloadModel(model) {
+            modelDownloadState[model.key] = { downloading: true };
+            renderModels(await window.pywebview.api.get_models());
+
+            showProgress(0, `Starting download of ${model.name}...`);
+
+            await window.pywebview.api.download_model(
+                model.tag,
+                (update) => {
+                    showProgress(update.percent, update.message);
+                    if (update.status === 'error') {
+                        hideProgress();
+                    }
+                },
+                (tag, success, path) => {
+                    delete modelDownloadState[model.key];
+                    if (success) {
+                        showProgress(100, `Installed to ${path}`);
+                        setTimeout(hideProgress, 2000);
+                    }
+                    loadModels();
+                }
+            );
+        }
+
+        function showProgress(percent, message) {
+            progressBar.classList.add('visible');
+            progressTextEl.classList.add('visible');
+            progressFill.style.width = `${percent}%`;
+            progressTextEl.textContent = message;
+            statusDot.className = 'status-dot warning';
+            statusText.textContent = 'Downloading...';
+        }
+
+        function hideProgress() {
+            progressBar.classList.remove('visible');
+            progressTextEl.classList.remove('visible');
+            updateStatus('Idle', '');
+        }
+
+        function setMaxSteps(steps, el) {
+            maxSteps = steps;
+            document.querySelectorAll('[data-steps]').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        instructionInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                runAgent();
+            }
+        });
+
+        instructionInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+        });
+
+        function useSuggestion(text) {
+            instructionInput.value = text;
+            instructionInput.focus();
+        }
+
+        function hideEmptyState() {
+            emptyState.style.display = 'none';
+            logContainer.classList.remove('hidden');
+        }
+
+        function showEmptyState() {
+            emptyState.style.display = 'flex';
+            logContainer.classList.add('hidden');
+            logContainer.innerHTML = '';
+        }
+
+        function getTimeString() {
+            return new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function addLogEntry(type, label, message) {
+            hideEmptyState();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+
+            entry.innerHTML = `
+                <div class="log-time">${getTimeString()}</div>
+                <div class="log-content">
+                    <div class="label">${escapeHtml(label)}</div>
+                    <div class="message">${escapeHtml(message)}</div>
+                </div>
+            `;
+
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateStatus(status, type) {
+            statusText.textContent = status;
+            statusDot.className = 'status-dot';
+            if (type === 'active') statusDot.classList.add('active');
+            if (type === 'error') statusDot.classList.add('error');
+            if (type === 'warning') statusDot.classList.add('warning');
+        }
+
+        function clearLog() {
+            showEmptyState();
+            updateStatus('Idle', '');
+        }
+
+        async function refreshModels() {
+            updateStatus('Refreshing...', 'warning');
+            await loadModels();
+            updateStatus('Idle', '');
+        }
+
+        async function runAgent() {
+            if (isRunning) {
+                await window.pywebview.api.stop_agent();
+                return;
+            }
+
+            const instruction = instructionInput.value.trim();
+            if (!instruction) return;
+
+            if (!selectedModel) {
+                addLogEntry('error', 'No Model', 'Please select a model first');
+                return;
+            }
+
+            const models = await window.pywebview.api.get_models();
+            const model = models.find(m => m.key === selectedModel);
+
+            if (model && model.type === 'local' && !model.installed) {
+                addLogEntry('error', 'Model Not Installed', `${model.name} needs to be downloaded first. Click Install in the sidebar.`);
+                return;
+            }
+
+            isRunning = true;
+            runBtn.textContent = 'Stop';
+            runBtn.className = 'btn btn-danger run-btn';
+            instructionInput.disabled = true;
+            updateStatus('Running...', 'active');
+
+            addLogEntry('status', 'Agent Started', `Model: ${model.name}`);
+            addLogEntry('thought', 'Instruction', instruction);
+
+            try {
+                const result = await window.pywebview.api.start_agent(instruction, selectedModel, maxSteps);
+                if (result.success) {
+                    addLogEntry('done', 'Complete', result.message || 'Agent finished successfully');
+                } else {
+                    addLogEntry('error', 'Error', result.message);
+                }
+            } catch (error) {
+                addLogEntry('error', 'Error', error.message || String(error));
+                updateStatus('Error', 'error');
+            } finally {
+                isRunning = false;
+                runBtn.textContent = 'Run';
+                runBtn.className = 'btn btn-primary run-btn';
+                instructionInput.disabled = false;
+                updateStatus('Idle', '');
+            }
+        }
+
+        window.pywebview.api.on_status = function(message) {
+            addLogEntry('status', 'Status', message);
+        };
+
+        window.pywebview.api.on_step = function(step, thought, action, params) {
+            addLogEntry('thought', `Step ${step}`, thought);
+            addLogEntry('action', 'Action', `${action} ${JSON.stringify(params)}`);
+        };
+
+        init();
+    </script>
+</body>
+</html>

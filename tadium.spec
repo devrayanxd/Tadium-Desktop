@@ -66,7 +66,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='icon.png',
+    # icon='icon.png',  # Uncomment after converting to .ico for Windows builds
 )
 
 coll = COLLECT(
